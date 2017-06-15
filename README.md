@@ -18,6 +18,6 @@ This dataset was released to the participants of the 2016 Recsys Challenge.
 2) `cd data/xing`, then run `python build_dataset.py <path_to_interactions>` to build the dataset. It will be saved under `data/xing/dense/last-session-out/sessions.hdf`.
 
 3) To run HGRU on this dataset, go to `scripts` folder.
-Then run `sh xing_dense_small.sh` for the _small_ HRNN networks; run `sh xing_dense_large.sh` if you want to run _large_ HRNN networks. See the paper for further details (we used random seeds in \{0..9\} in our experiments).
+Then run `sh xing_dense_small.sh` to execute _small_ HRNN networks, or run `sh xing_dense_large.sh` to execute _large_ HRNN networks. See the paper for further details (notice that we used random seeds in \{0..9\} in our experiments).
 
 NOTE: These experiments run quite efficiently on CPU too (small networks train and evaluate in ~20 minutes on a 8-core Intel(R) Xeon(R) CPU E3-1246 v3 @ 3.50GHz).
