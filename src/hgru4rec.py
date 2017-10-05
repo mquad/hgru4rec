@@ -644,7 +644,7 @@ class HGRU4Rec:
         # reset the user network state for new users
         h_u = T.zeros_like(h_u) * Ustart[:, None] + h_u * (1 - Ustart[:, None])
 
-        Hc_new = [h_u]
+        Hu_new = [h_u]
         for i in range(1, len(self.user_layers)):
             user_in = T.dot(h_u, self.Wu_in[i]) + self.Bu_h[i]
             user_in = user_in.T
@@ -659,9 +659,8 @@ class HGRU4Rec:
             h_u = self.dropout(h_u, drop_p_hidden_usr)
             h_u = Hu[i] * (1 - Sstart[:, None]) + h_u * Sstart[:, None]
             h_u = T.zeros_like(h_u) * Ustart[:, None] + h_u * (1 - Ustart[:, None])
-            Hc_new.append(h_u)
+            Hu_new.append(h_u)
 
-        self.h_c_new = h_u
         #
         # SESSION GRU
         #
@@ -735,13 +734,13 @@ class HGRU4Rec:
                 preact += T.dot(h_u, Scy.T)
                 sampled_params.append(Scy)
             y = self.final_activation(preact)
-            return Hs_new, Hc_new, y, sampled_params
+            return Hs_new, Hu_new, y, sampled_params
         else:
             preact = T.dot(h_s, self.Wsy.T) + self.By.flatten()
             if self.user_to_output:
                 preact += T.dot(h_u, self.Wuy.T)
             y = self.final_activation(preact)
-            return Hs_new, Hc_new, y, [Sin]
+            return Hs_new, Hu_new, y, [Sin]
 
     def fit(self, train_data, valid_data=None, retrain=False, sample_store=10000000, patience=3, margin=1.003,
             save_to=None, load_from=None):
@@ -799,7 +798,7 @@ class HGRU4Rec:
 
         X, Y = T.ivectors(2)
         Sstart, Ustart = T.fvectors(2)
-        Hs_new, Hc_new, Y_pred, sampled_params = self.model(X, Sstart, Ustart, self.Hs, self.Hu, Y,
+        Hs_new, Hu_new, Y_pred, sampled_params = self.model(X, Sstart, Ustart, self.Hs, self.Hu, Y,
                                                             drop_p_hidden_usr=self.dropout_p_hidden_usr,
                                                             drop_p_hidden_ses=self.dropout_p_hidden_ses,
                                                             drop_p_init=self.dropout_p_init)
@@ -829,8 +828,8 @@ class HGRU4Rec:
             eval_updates[self.Hs[i]] = Hs_new[i]
         # Update the hidden states of the User GRU
         for i in range(len(self.Hu)):
-            updates[self.Hu[i]] = Hc_new[i]
-            eval_updates[self.Hu[i]] = Hc_new[i]
+            updates[self.Hu[i]] = Hu_new[i]
+            eval_updates[self.Hu[i]] = Hu_new[i]
 
         # Compile the training and evaluation functions
         self.train_function = function(inputs=[X, Sstart, Ustart, Y], outputs=cost, updates=updates,
@@ -1000,14 +999,14 @@ class HGRU4Rec:
             for i in range(len(self.user_layers)):
                 self.Hu[i].set_value(np.zeros((batch, self.user_layers[i]), dtype=theano.config.floatX), borrow=True)
             if predict_for_item_ids is not None:
-                Hs_new, Hc_new, yhat, _ = self.model(X, Sstart, Ustart, self.Hs, self.Hu, Y)
+                Hs_new, Hu_new, yhat, _ = self.model(X, Sstart, Ustart, self.Hs, self.Hu, Y)
             else:
-                Hs_new, Hc_new, yhat, _ = self.model(X, Sstart, Ustart, self.Hs, self.Hu)
+                Hs_new, Hu_new, yhat, _ = self.model(X, Sstart, Ustart, self.Hs, self.Hu)
             updatesH = OrderedDict()
             for i in range(len(self.Hs)):
                 updatesH[self.Hs[i]] = Hs_new[i]
             for i in range(len(self.Hu)):
-                updatesH[self.Hu[i]] = Hc_new[i]
+                updatesH[self.Hu[i]] = Hu_new[i]
 
             if predict_for_item_ids is not None:
                 self.predict = function(inputs=[X, Sstart, Ustart, Y], outputs=yhat, updates=updatesH,
