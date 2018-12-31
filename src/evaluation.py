@@ -137,7 +137,7 @@ def evaluate_sessions_batch(pr, train_data, test_data, items=None, cut_off=20, b
                 batch_results = np.vstack([eval_record, others_record]).T
                 rank_list.append(batch_results)
 
-            rank_ok = ranks < cut_off
+            rank_ok = ranks <= cut_off
             recall += rank_ok.sum()
             mrr += (1.0 / ranks[rank_ok]).sum()
             evalutation_point_count += len(ranks)
@@ -327,7 +327,7 @@ def evaluate_sessions_batch_hier_bootstrap(pr, train_data, test_data, items=None
                     batch_results = np.vstack([eval_record, others_record]).T
                     rank_list.append(batch_results)
 
-                rank_ok = ranks < cut_off
+                rank_ok = ranks <= cut_off
                 recall += rank_ok.sum()
                 mrr += (1.0 / ranks[rank_ok]).sum()
                 evalutation_point_count += len(ranks)
@@ -439,7 +439,7 @@ def evaluate_sessions(pr, train_data, test_data, items=None, cut_off=20, output_
                 else:
                     rank_list.append((sid, iid, rank))
             assert rank > 0
-            if rank < cut_off:
+            if rank <= cut_off:
                 recall += 1
                 mrr += 1.0 / rank
             evalutation_point_count += 1
