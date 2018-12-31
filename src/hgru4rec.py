@@ -677,12 +677,11 @@ class HGRU4Rec:
         session_in = vec.T
         # ^ session_layers[0] x batch_size
 
-        # initialize the h_s with h_c only for starting sessions
+        # initialize the h_s with h_u only for starting sessions
         h_s_init = self.dropout(self.s_init_act(T.dot(h_u, self.Ws_init[0]) + self.Bs_init), drop_p_init)
         h_s = Hs[0] * (1 - Sstart[:, None]) + h_s_init * Sstart[:, None]
         # reset h_s for starting users
         h_s = h_s * (1 - Ustart[:, None]) + T.zeros_like(h_s) * Ustart[:, None]
-        self.h_s_init = h_s
 
         if self.user_propagation_mode == 'all':
             # this propagates the bias throughout all the session
@@ -695,34 +694,34 @@ class HGRU4Rec:
                                   + T.dot(h_s, self.Ws_rz[0]).T)
             # ^ 2*session_layers[0] x batch_size
 
-            h_s = self.hidden_activation(T.dot(h_s * rz_s[:self.session_layers[0]].T, self.Ws_hh[0]).T
+            h_s_cand = self.hidden_activation(T.dot(h_s * rz_s[:self.session_layers[0]].T, self.Ws_hh[0]).T
                                          + session_in[:self.session_layers[0]])
             # ^ session_layers[0] x batch_size
         else:
             rz_s = T.nnet.sigmoid(session_in[self.session_layers[0]:]
                                   + T.dot(h_s, self.Ws_rz[0]).T)
-            h_s = self.hidden_activation(T.dot(h_s * rz_s[:self.session_layers[0]].T, self.Ws_hh[0]).T
+            h_s_cand = self.hidden_activation(T.dot(h_s * rz_s[:self.session_layers[0]].T, self.Ws_hh[0]).T
                                          + session_in[:self.session_layers[0]])
 
         z = rz_s[self.session_layers[0]:].T
         # ^ batch_size x session_layers[0]
-        h_s = (1.0 - z) * Hs[0] + z * h_s.T
+        h_s = (1.0 - z) * h_s + z * h_s_cand.T
         h_s = self.dropout(h_s, drop_p_hidden_ses)
         # ^ batch_size x session_layers[0]
         Hs_new = [h_s]
         for i in range(1, len(self.session_layers)):
+            # reset Hs for new starting users
+            h_s_i = Hs[i] * (1 - Ustart[:, None]) + T.zeros_like(Hs[i]) * Ustart[:, None]
+            # go through the next GRU layer
             session_in = T.dot(h_s, self.Ws_in[i]) + self.Bs_h[i]
             session_in = session_in.T
-            rz_s = T.nnet.sigmoid(session_in[self.session_layers[i]:]
-                                  + T.dot(Hs[i], self.Ws_rz[i]).T)
-            h_s = self.hidden_activation(T.dot(Hs[i] * rz_s[:self.session_layers[i]].T, self.Ws_hh[i]).T
+            rz_s = T.nnet.sigmoid(session_in[self.session_layers[i]:] + T.dot(h_s_i, self.Ws_rz[i]).T)
+            h_s_i_cand = self.hidden_activation(T.dot(h_s_i * rz_s[:self.session_layers[i]].T, self.Ws_hh[i]).T
                                          + session_in[:self.session_layers[i]])
             z = rz_s[self.session_layers[i]:].T
-            h_s = (1.0 - z) * Hs[i] + z * h_s.T
-            h_s = self.dropout(h_s, drop_p_hidden_ses)
-            Hs_new.append(h_s)
-
-        self.h_s_new = h_s
+            h_s_i = (1.0 - z) * h_s_i + z * h_s_i_cand.T
+            h_s_i = self.dropout(h_s_i, drop_p_hidden_ses)
+            Hs_new.append(h_s_i)
 
         if Y is not None:
             Ssy = self.Wsy[Y]
