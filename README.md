@@ -13,7 +13,7 @@ We suggest to use `virtualenv` or `conda` (preferred) together with `requirement
 This repository comes with the code necessary to reproduce the experiments on the XING dataset.
 This dataset was released to the participants of the 2016 Recsys Challenge.
 
-1) Download the dataset (see [here](http://2016.recsyschallenge.com/)). You will only need the file `interactions.csv`.
+1) Download the dataset (see [here](http://2016.recsyschallenge.com/), though it is no longer available.  See format in [this comment](https://github.com/mquad/hgru4rec/issues/1#issuecomment-381060517)). You will only need the file `interactions.csv`.
 
 2) `cd data/xing`, then run `python build_dataset.py <path_to_interactions>` to build the dataset. It will be saved under `data/xing/dense/last-session-out/sessions.hdf`.
 
