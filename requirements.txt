@@ -1,6 +1,6 @@
 certifi==2017.4.17
 numexpr==2.6.2
-numpy==1.13.0
+numpy==1.22.0
 pandas==0.20.2
 python-dateutil==2.6.0
 pytz==2017.2
