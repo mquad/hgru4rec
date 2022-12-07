@@ -1,4 +1,4 @@
-certifi==2017.4.17
+certifi==2022.12.7
 numexpr==2.6.2
 numpy==1.13.0
 pandas==0.20.2
